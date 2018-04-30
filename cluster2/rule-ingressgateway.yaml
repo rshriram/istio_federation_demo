@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: gateway-bound-route
+spec:
+  hosts:
+  - "*.cluster2.global"
+  gateways:
+  - istio-ingressgateway # pinned to ingress gateway only
+  http:
+    - route:
+      - destination:
+          host: server.default.svc.cluster.local
+          port:
+            name: http
+        weight: 100

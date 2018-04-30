@@ -1,0 +1,18 @@
+# One external service for each cluster to bridge
+# the endpoint.address should be the ingress gateway adress of the cluster.
+apiVersion: networking.istio.io/v1alpha3
+kind: ExternalService
+metadata:
+  name: external-service-cluster2
+spec:
+  hosts:
+  - "*.cluster2.global"
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  discovery: DNS
+  endpoints:
+  - address: __REPLACEME__
+    ports:
+      http: 80
