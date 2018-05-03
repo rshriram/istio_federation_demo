@@ -26,7 +26,7 @@ spec:
       - gateways:
         - istio-egressgateway
         authority:
-          regex: ".*?\.cluster1\.global"
+          regex: ".*?[.]cluster1[.]global"
       route:
       - destination:
           host: "*.cluster1.global"
@@ -35,7 +35,7 @@ spec:
       - gateways:
         - istio-egressgateway
         authority:
-          regex: ".*?\.cluster2\.global"
+          regex: '.*?[.]cluster2[.]global'
       route:
       - destination:
           host: "*.cluster2.global"

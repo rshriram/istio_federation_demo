@@ -17,8 +17,8 @@ CLUSTER2_REGION="us-east-2"
 KOPS_C1_ZONE="${CLUSTER1_REGION}a"
 KOPS_C2_ZONE="${CLUSTER2_REGION}a"
 
-#aws s3api create-bucket --bucket ${CLUSTER1_BUCKET} --region ${CLUSTER1_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER1_REGION}
-#aws s3api create-bucket --bucket ${CLUSTER2_BUCKET} --region ${CLUSTER2_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER2_REGION}
+aws s3api create-bucket --bucket ${CLUSTER1_BUCKET} --region ${CLUSTER1_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER1_REGION}
+aws s3api create-bucket --bucket ${CLUSTER2_BUCKET} --region ${CLUSTER2_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER2_REGION}
 
 kops create cluster --name ${CLUSTER1_NAME} \
   --state ${CLUSTER1_STATE} --zones ${KOPS_C1_ZONE} \
@@ -79,11 +79,11 @@ clientPod=`kubectl --context ${CLUSTER1_NAME} get po -l app=client -o jsonpath='
 output=`kubectl --context ${CLUSTER1_NAME} exec -it $clientPod -c client -- curl http://server.cluster2.global/helloworld`
 success=$?
 
-#set +e
-#kops delete cluster --name ${CLUSTER1_NAME} --state ${CLUSTER1_STATE} --yes
-#kops delete cluster --name ${CLUSTER2_NAME} --state ${CLUSTER2_STATE} --yes
-#aws s3api delete-bucket --bucket ${CLUSTER1_BUCKET}
-#aws s3api delete-bucket --bucket ${CLUSTER2_BUCKET}
+set +e
+kops delete cluster --name ${CLUSTER1_NAME} --state ${CLUSTER1_STATE} --yes
+kops delete cluster --name ${CLUSTER2_NAME} --state ${CLUSTER2_STATE} --yes
+aws s3api delete-bucket --bucket ${CLUSTER1_BUCKET}
+aws s3api delete-bucket --bucket ${CLUSTER2_BUCKET}
 
 echo "Test output for call from cluster1 to cluster2: $output"
 exit $success

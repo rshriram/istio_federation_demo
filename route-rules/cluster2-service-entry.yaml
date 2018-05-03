@@ -11,7 +11,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
-  discovery: DNS
+  resolution: DNS
   endpoints:
     # address of ingress gateway of this cluster
   - address: __REPLACEME__
