@@ -22,7 +22,5 @@ cluster2's istio-ingressgateway is launched with a LoadBalancer, so that we
 get a publicly routable address. This address is then used to configure the
 external service in Cluster1.
 
-There is no DNS setup in this demo. curl command is used from the client
-pod with a dummy IP (1.1.1.1), since all routing happens at Envoy level
-based on HTTP host headers.
+There is no DNS setup required.
 
