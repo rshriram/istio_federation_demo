@@ -22,7 +22,7 @@ spec:
   #     name: https
   #     protocol: HTTPS
   #   hosts:
-  #   - *.allspark
+  #   - *.cluster2.global
   #   tls:
   #     # We can reuse the standard Istio certs mounted in the gateway
   #     mode: SIMPLE #enables HTTPS on this port
