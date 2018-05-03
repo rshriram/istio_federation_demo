@@ -486,7 +486,7 @@ data:
     template: |-
       initContainers:
       - name: istio-init
-        image: docker.io/rshriram/proxy_init:4-25-2018-master
+        image: docker.io/rshriram/proxy_init:5-3-2018-0.8
         args:
         - "-p"
         - [[ .MeshConfig.ProxyListenPort ]]
@@ -530,7 +530,7 @@ data:
         image: [[ if (isset .ObjectMeta.Annotations "sidecar.istio.io/proxyImage") -]]
         "[[ index .ObjectMeta.Annotations "sidecar.istio.io/proxyImage" ]]"
         [[ else -]]
-        docker.io/rshriram/proxyv2:4-25-2018-master
+        docker.io/rshriram/proxyv2:5-3-2018-0.8
         [[ end -]]
         args:
         - proxy
@@ -1893,7 +1893,7 @@ spec:
       serviceAccountName: istio-egressgateway-service-account
       containers:
         - name: egressgateway
-          image: "docker.io/rshriram/proxyv2:4-25-2018-master"
+          image: "docker.io/rshriram/proxyv2:5-3-2018-0.8"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -2013,7 +2013,7 @@ spec:
       serviceAccountName: istio-ingressgateway-service-account
       containers:
         - name: ingressgateway
-          image: "docker.io/rshriram/proxyv2:4-25-2018-master"
+          image: "docker.io/rshriram/proxyv2:5-3-2018-0.8"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -2172,7 +2172,7 @@ spec:
                 - s390x
       containers:
       - name: mixer
-        image: "docker.io/rshriram/mixer:4-25-2018-master"
+        image: "docker.io/rshriram/mixer:5-3-2018-0.8"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9091
@@ -2186,7 +2186,7 @@ spec:
             {}
             
       - name: istio-proxy
-        image: "docker.io/rshriram/proxyv2:4-25-2018-master"
+        image: "docker.io/rshriram/proxyv2:5-3-2018-0.8"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 15004
@@ -2245,7 +2245,7 @@ spec:
           optional: true
       containers:
       - name: mixer
-        image: "docker.io/rshriram/mixer:4-25-2018-master"
+        image: "docker.io/rshriram/mixer:5-3-2018-0.8"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9091
@@ -2259,7 +2259,7 @@ spec:
             {}
             
       - name: istio-proxy
-        image: "docker.io/rshriram/proxyv2:4-25-2018-master"
+        image: "docker.io/rshriram/proxyv2:5-3-2018-0.8"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 15004
@@ -2325,7 +2325,7 @@ spec:
       serviceAccountName: istio-pilot-service-account
       containers:
         - name: discovery
-          image: "docker.io/rshriram/pilot:4-25-2018-master"
+          image: "docker.io/rshriram/pilot:5-3-2018-0.8"
           imagePullPolicy: IfNotPresent
           args:
           - "discovery"
@@ -2365,7 +2365,7 @@ spec:
             mountPath: /etc/certs
             readOnly: true
         - name: istio-proxy
-          image: "docker.io/rshriram/proxyv2:4-25-2018-master"
+          image: "docker.io/rshriram/proxyv2:5-3-2018-0.8"
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 15003
@@ -2465,7 +2465,7 @@ spec:
       serviceAccountName: istio-citadel-service-account
       containers:
         - name: citadel
-          image: "docker.io/rshriram/citadel:4-25-2018-master"
+          image: "docker.io/rshriram/citadel:5-3-2018-0.8"
           imagePullPolicy: IfNotPresent
           args:
             - --append-dns-names=true
@@ -2533,7 +2533,7 @@ spec:
       serviceAccountName: istio-sidecar-injector-service-account
       containers:
         - name: sidecar-injector-webhook
-          image: "docker.io/rshriram/sidecar_injector:4-25-2018-master"
+          image: "docker.io/rshriram/sidecar_injector:5-3-2018-0.8"
           imagePullPolicy: IfNotPresent
           args:
             - --caCertFile=/etc/istio/certs/root-cert.pem

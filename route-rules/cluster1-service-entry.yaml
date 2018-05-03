@@ -3,16 +3,17 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: external-service-cluster2
+  name: external-service-cluster1
 spec:
   hosts:
-  - "*.cluster2.global"
+  - "*.cluster1.global"
   ports:
   - number: 80
     name: http
     protocol: HTTP
   discovery: DNS
   endpoints:
+    # address of ingressgateway of this cluster
   - address: __REPLACEME__
     ports:
       http: 80

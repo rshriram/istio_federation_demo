@@ -1,0 +1,58 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: route-via-gateway
+spec:
+  hosts:
+  - "*.global"
+  gateways:
+  - istio-ingressgateway
+  - istio-egressgateway
+  - mesh
+  http:
+    # traffic from sidecars for *.global hosts should go to egress gateway
+    # service
+    - match:
+      - gateways:
+        - mesh
+      route:
+      - destination:
+          host: istio-egressgateway.istio-system.svc.cluster.local
+          port:
+            number: 80
+        weight: 100
+
+      # For traffic arriving at ingress gateway in cluster 2, route to
+      # internal service customize this based on the local cluster.
+    - match:
+      - gateways:
+        - istio-ingressgateway
+        authority:
+          regex: ".*?\.cluster2.global"
+      route:
+      - destination:
+          host: server.default.svc.cluster.local
+          port:
+            name: http
+        weight: 100
+
+    # Add the following sub rule for each cluster to bridge
+    # assuming that the clusters have *.clusterX.global for DNS suffix
+    - match:        
+      - gateways:
+        - istio-egressgateway
+        authority:
+          regex: ".*?\.cluster1\.global"
+      route:
+      - destination:
+          host: "*.cluster1.global"
+        weight: 100
+    - match:        
+      - gateways:
+        - istio-egressgateway
+        authority:
+          regex: ".*?\.cluster2\.global"
+      route:
+      - destination:
+          host: "*.cluster2.global"
+        weight: 100
