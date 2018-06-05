@@ -11,9 +11,14 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
+  - number: 443 #this will exit from sidecar if user does https
+    name: https
+    protocol: HTTPS
   resolution: DNS
   endpoints:
-    # address of ingress gateway of this cluster
+    # address of ingressgateway of this cluster
   - address: __REPLACEME__
     ports:
       http: 80
+      https: 443
+      

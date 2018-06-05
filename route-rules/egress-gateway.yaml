@@ -10,8 +10,13 @@ spec:
     istio: egressgateway
   servers:
   - port:
-      number: 80 #also declared in gateway's deployment files
-      name: http
-      protocol: HTTP
+      number: 443 #also declared in gateway's deployment files
+      name: https
+      protocol: HTTPS
     hosts:
-    - "*.global"
+    - "*"
+    tls:
+      mode: MUTUAL
+      serverCertificate: /etc/certs/cert-chain.pem
+      privateKey: /etc/certs/key.pem
+      caCertificates: /etc/certs/root-cert.pem

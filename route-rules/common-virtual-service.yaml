@@ -18,25 +18,31 @@ spec:
       - destination:
           host: istio-egressgateway.istio-system.svc.cluster.local
           port:
-            number: 80
+            number: 443
         weight: 100
     # Add the following sub rule for each cluster to bridge
     # assuming that the clusters have *.clusterX.global for DNS suffix
     - match:        
       - gateways:
-        - istio-egressgateway
+          - istio-egressgateway
+        port: 443
         authority:
           regex: ".*?[.]cluster1[.]global"
       route:
       - destination:
           host: "*.cluster1.global"
+          port:
+            number: 443
         weight: 100
     - match:        
       - gateways:
-        - istio-egressgateway
+          - istio-egressgateway
+        port: 443
         authority:
           regex: '.*?[.]cluster2[.]global'
       route:
       - destination:
           host: "*.cluster2.global"
+          port:
+            number: 443
         weight: 100
