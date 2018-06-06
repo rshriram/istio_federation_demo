@@ -1,26 +1,36 @@
-usage: ./run_demo_from_laptop.sh
-prerequisites: kops, kubectl (1.9.x)
+A simple demonstration of cross cluster communication with Istio using
+Istio gateways. The two Istio clusters could be in same or different region
+or on-prem/off-prem or could even be using different platforms (e.g., K8S,
+and CF).
 
-The `run_demo_from_laptop.sh` script creates two Kube clusters in AWS.
+![Traffic flow across clusters with end-to-end mTLS][Federation-setup]
 
-The traffic flow (with TLS):
+The operator explicitly exposes one or more services in a cluster under a
+common DNS suffix (e.g., *.global), via the Ingress gateway. Access to
+remote clusters can be granted by adding an Istio ServiceEntry object that
+points to the respective remote cluster's ingress gateway for all hosts
+associated with the remote cluster.
 
-`cluster1(client+proxy --> istio-egressgateway)-->cluster2(istio-ingressgateway-->proxy+server)`
+Routing rules (virtual services) are setup such that traffic from a cluster
+to a remote cluster always traverses through the local egress
+gateway. Funneling all egress traffic through a dedicated egress gateway
+simplifies policy enforcement, traffic scrubbing, etc.
 
-cluster2's istio-ingressgateway is launched with a LoadBalancer, so that we
-get a publicly routable address. This address is then used to configure the
-external service in Cluster1.
+Even though custom DNS names are used here, there is no additional DNS
+setup required. Core DNS resolves all hosts in *.global to an invalid IP
+(e.g., 1.1.1.1), allowing traffic to exit the application and be captured
+by the sidecar. Once the traffic reaches the sidecar, routing is done
+through HTTP Authority headers or SNI names.
 
-There is no DNS setup required. A simple CoreDNS plugin is used to resolve
-all hosts in the *.global domain to an invalid IP (1.1.1.1). Traffic from
-the app is trapped by the sidecar, which routes it based on the HTTP host.
+For example, the client (curl command) in cluster1 calls
+http://server2.cluster.global, which gets routed from the local proxy to
+the local egress-gateway. From the egress gateway the request traverses to
+the remote ingress gateway in cluster2, which then forwards the request to
+the appropriate backend in cluster2.
 
-The client in cluster1 calls http://server2.cluster.global, which gets routed from the
-local proxy to the local egress-gateway. From the egress gateway the
-request traverses to the remote ingress gateway in cluster2, which then forwards the
-request to the appropriate backend in cluster2.
+A separate root CA cluster issues/rotates certs of cluster local CAs. This
+allows cross cluster communication using mutual TLS, as there is a shared
+root of trust. Within a cluster, istio mTLS authentication is used to
+secure traffic between two endpoints.
 
-TLS setup: A separate root CA cluster issues/rotates certs of cluster local
-CAs. This allows cross cluster communication using mutual TLS, as there is
-a shared root of trust. Within a cluster, istio mTLS authentication is used
-to secure traffic between two endpoints.
+[Federation-setup]: Federation-setup.png "Cross cluster communication using Istio Gateways"
