@@ -98,8 +98,8 @@ sed -e s/__REPLACEME__/${cluster2_gateway}/g ${SCRIPTDIR}/route-rules/cluster2-s
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/ingress-gateway.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/egress-gateway.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/common-virtual-service.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/common-destination-rule.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/egressgateway-destination-rule.yaml
+kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/common-destination-rule.yaml
+kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/egressgateway-destination-rule.yaml
 #kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/client.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/server.yaml
 
