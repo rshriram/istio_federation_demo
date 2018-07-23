@@ -28,7 +28,7 @@ KOPS_C1_ZONE="${CLUSTER1_REGION}a"
 KOPS_C2_ZONE="${CLUSTER2_REGION}a"
 
 aws s3api create-bucket --bucket ${ROOTCA_BUCKET} --region ${ROOTCA_REGION} --create-bucket-configuration LocationConstraint=${ROOTCA_REGION}
-aws s3api create-bucket --bucket ${CLUSTER2_BUCKET} --region ${CLUSTER2_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER2_REGION}
+aws s3api create-bucket --bucket ${CLUSTER1_BUCKET} --region ${CLUSTER1_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER1_REGION}
 aws s3api create-bucket --bucket ${CLUSTER2_BUCKET} --region ${CLUSTER2_REGION} --create-bucket-configuration LocationConstraint=${CLUSTER2_REGION}
 
 kops create cluster --name ${ROOTCA_NAME} \

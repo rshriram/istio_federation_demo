@@ -10,7 +10,7 @@ spec:
   ports:
   - number: 80
     name: http
-    protocol: HTTP
+    protocol: HTTP2
   - number: 443 #this will exit from sidecar if user does https
     name: https
     protocol: HTTPS
