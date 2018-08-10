@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: istio-ingressgateway-server-default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    # Union of all ports exposed by this cluster
+  - port:
+      number: 8888
+      name: server-default-8888
+      protocol: TLS
+    hosts:
+    - server.default.svc.cluster.global
+    tls:
+      mode: PASSTHROUGH

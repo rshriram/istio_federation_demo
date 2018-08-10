@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ingressgateway-to-server-default
+spec:
+  hosts:
+  - server.default.svc.cluster.global
+  gateways:
+  - istio-ingressgateway
+  tls:
+  - match:
+    - port: 8888
+      sniHosts:
+      - server.default.svc.cluster.global
+  - route:
+    - destination:
+        host: server.default.svc.cluster.local
+        port:
+          number: 8888

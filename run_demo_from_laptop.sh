@@ -81,29 +81,17 @@ sed -e "s/__CLUSTERNAME__/${CLUSTER2_ID}/g;s/__ROOTCA_HOST__/${rootca_host}/g" i
 sleep 300 # NEED A WAY TO TEST IF ALL ISTIO COMPONENTS ARE UP
 
 cluster1_gateway=`kubectl --context ${CLUSTER1_NAME} get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
-cluster2_gateway=`kubectl --context ${CLUSTER2_NAME} get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
 
-sed -e s/__REPLACEME__/${cluster1_gateway}/g ${SCRIPTDIR}/route-rules/cluster1-service-entry.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
-sed -e s/__REPLACEME__/${cluster2_gateway}/g ${SCRIPTDIR}/route-rules/cluster2-service-entry.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/ingress-gateway.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/egress-gateway.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/common-virtual-service.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/common-destination-rule.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/egressgateway-destination-rule.yaml
+kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/1-service-entry-for-sidecar-to-egress-for-foosvc.yaml
+kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/2-mtls-destination-rule-for-sidecar-to-egress-for-foosvc.yaml
+kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/3-egress-gateway-with-mtls-for-foosvc.yaml
+kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/4-virtual-service-for-egress-to-ingress-for-foosvc.yaml
+sed -e s/__REPLACEME__/${cluster1_gateway}/g ${SCRIPTDIR}/route-rules/5-service-entry-for-egress-to-ingress-with-all-remote-ports.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/client.yaml
-#kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/server.yaml
 
-sed -e s/__REPLACEME__/${cluster1_gateway}/g ${SCRIPTDIR}/route-rules/cluster1-service-entry.yaml | kubectl --context ${CLUSTER2_NAME} apply -f -
-sed -e s/__REPLACEME__/${cluster2_gateway}/g ${SCRIPTDIR}/route-rules/cluster2-service-entry.yaml | kubectl --context ${CLUSTER2_NAME} apply -f -
-kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/ingress-gateway.yaml
-kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/egress-gateway.yaml
-kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/common-virtual-service.yaml
-kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/common-destination-rule.yaml
-kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/egressgateway-destination-rule.yaml
-#kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/client.yaml
+kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/7-ingress-gateway-with-mtls-for-foosvc.yaml
+kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/8-virtual-service-for-ingress-to-foosvc.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/server.yaml
-
-kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/cluster2-inbound-virtual-service.yaml
 
 sleep 30 #for things to settle
 clientPod=`kubectl --context ${CLUSTER1_NAME} get po -l app=client -o jsonpath='{.items[0].metadata.name}'`

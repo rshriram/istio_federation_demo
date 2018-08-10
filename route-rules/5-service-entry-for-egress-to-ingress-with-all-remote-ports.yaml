@@ -1,0 +1,16 @@
+# One service entry for each ingress gateway from remote clusters
+# We need a way to make sure Pilot does not create listeners for these entries.
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: service-entry-ingress-gateway-cluster2
+spec:
+  hosts:
+  - __REPLACEME__
+  ports:
+    # The union of all ports exposed by services in that cluster
+  - number: 8888
+    name: tcp
+    protocol: TCP
+  location: MESH_EXTERNAL  
+  resolution: DNS
