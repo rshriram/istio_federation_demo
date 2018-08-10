@@ -15,5 +15,6 @@ spec:
     route:
     - destination:
         host: server.default.svc.cluster.local
+        subset: notls
         port:
           number: 80

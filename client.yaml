@@ -55,8 +55,6 @@ spec:
       - args:
         - proxy
         - sidecar
-        - proxyLogLevel
-        - trace
         - --configPath
         - /etc/istio/proxy
         - --binaryPath

@@ -16,7 +16,7 @@ spec:
   - number: 80
     name: http
     protocol: HTTP
-  location: MESH_INTERNAL
+  location: MESH_EXTERNAL
   resolution: DNS
   endpoints:
     # This is our cluster-local egress gateway
