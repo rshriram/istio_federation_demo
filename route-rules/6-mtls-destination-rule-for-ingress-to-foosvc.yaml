@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: dest-rule-server-default
+spec:
+  host: server.default.svc.cluster.local
+  trafficPolicy:
+    # This applies for all clients in cluster 2
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+    # This applies to traffic coming to the service
+    # via the ingress gateway. Since the ingress
+    # gateway is doing a TLS passthrough, we should
+    # not encrypt the already encrypted connection.
+    # So we disable TLS configuration from gateway
+    # to the service
+  - name: notls
+    trafficPolicy:
+      tls:
+        mode: DISABLE
