@@ -56,8 +56,8 @@ kubectl --context ${ROOTCA_NAME} get nodes
 kubectl --context ${CLUSTER1_NAME} get nodes
 kubectl --context ${CLUSTER2_NAME} get nodes
 
-# # Install the ROOT CA
-kubectl --context ${ROOTCA_NAME} apply -f rootca.yaml
+# Install the ROOT CA
+kubectl --context ${ROOTCA_NAME} apply -f istio-citadel-standalone.yaml
 rootca_host=`kubectl --context ${ROOTCA_NAME} get service standalone-citadel -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
 
 kubectl --context ${ROOTCA_NAME} -n istio-system create serviceaccount istio-citadel-service-account-${CLUSTER1_ID}
@@ -68,11 +68,13 @@ kubectl --context ${ROOTCA_NAME} -n istio-system create serviceaccount istio-cit
 kubectl --context ${CLUSTER1_NAME} apply -f coredns.yaml
 kubectl --context ${CLUSTER1_NAME} delete --namespace=kube-system deployment kube-dns
 kubectl --context ${CLUSTER1_NAME} create namespace istio-system
+kubectl --context ${CLUSTER1_NAME} apply -f crds.yaml
 ${SCRIPTDIR}/provision_cluster_int_ca.sh $ROOTCA_NAME $CLUSTER1_NAME $CLUSTER1_ID
 
 kubectl --context ${CLUSTER2_NAME} apply -f coredns.yaml
 kubectl --context ${CLUSTER2_NAME} delete --namespace=kube-system deployment kube-dns
 kubectl --context ${CLUSTER2_NAME} create namespace istio-system
+kubectl --context ${CLUSTER2_NAME} apply -f crds.yaml
 ${SCRIPTDIR}/provision_cluster_int_ca.sh $ROOTCA_NAME $CLUSTER2_NAME $CLUSTER2_ID
 
 sed -e "s/__CLUSTERNAME__/${CLUSTER1_ID}/g;s/__ROOTCA_HOST__/${rootca_host}/g" istio.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
@@ -82,6 +84,7 @@ sleep 300 # NEED A WAY TO TEST IF ALL ISTIO COMPONENTS ARE UP
 
 cluster1_gateway=`kubectl --context ${CLUSTER1_NAME} get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
 
+kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/0-enable-global-mtls.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/1-service-entry-for-sidecar-to-egress-for-foosvc.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/2-mtls-destination-rule-for-sidecar-to-egress-for-foosvc.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/3-egress-gateway-with-mtls-for-foosvc.yaml
@@ -89,21 +92,23 @@ kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/4-virtual-s
 sed -e s/__REPLACEME__/${cluster1_gateway}/g ${SCRIPTDIR}/route-rules/5-service-entry-for-egress-to-ingress-with-all-remote-ports.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/client.yaml
 
+kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/0-enable-global-mtls.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/7-ingress-gateway-with-mtls-for-foosvc.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/8-virtual-service-for-ingress-to-foosvc.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/server.yaml
 
 sleep 30 #for things to settle
+set -x
 clientPod=`kubectl --context ${CLUSTER1_NAME} get po -l app=client -o jsonpath='{.items[0].metadata.name}'`
 
 # Call cluster2's service from cluster1. Use dummy IP 1.1.1.1 to skip DNS resolution issue.
-output=`kubectl --context ${CLUSTER1_NAME} exec -it $clientPod -c client -- curl -s -o /dev/null -I -w "%{http_code}" http://server.cluster2.global/helloworld`
+output=`kubectl --context ${CLUSTER1_NAME} exec -it $clientPod -c client -- curl -s -o /dev/null -I -w "%{http_code}" http://server.ns2.svc.cluster.global/helloworld`
 success=0
 if [ "$output" != "200" ]; then
-    echo "Failed to reach remote server server.cluster2.global"
+    echo "Failed to reach remote server server.ns2.svc.cluster.global"
     success=1
 else
-    echo "Successfully connnected to remote server server.cluster2.global"
+    echo "Successfully connnected to remote server server.ns2.svc.cluster.global"
     success=0
 fi
 

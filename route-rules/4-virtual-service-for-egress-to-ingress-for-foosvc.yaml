@@ -1,18 +1,19 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: egressgateway-to-ingressgateway-server-default
+  name: egressgateway-to-ingressgateway-server-ns2
 spec:
   hosts:
-  - server.default.svc.cluster.global
+  - server.ns2.svc.cluster.global
   gateways:
-  - istio-egressgateway
+  - istio-egressgateway-server-ns2
   tls:
   - match:
-    - port: 8888
+    - port: 80
       sniHosts:
-      - server.default.svc.cluster.global
+      - server.ns2.svc.cluster.global
     route:
     - destination:
-        host: __REPLACEME__
-        port: 8888
+        host: cluster2-ingress-gateway.service.entry
+        port:
+          number: 80

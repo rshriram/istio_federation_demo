@@ -1,16 +1,16 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: istio-egressgateway-server-default
+  name: istio-egressgateway-server-ns2
 spec:
   selector:
     istio: egressgateway
   servers:
   - port:
-      number: 8888 # port used by server
-      name: server-default-8888
+      number: 80 # port used by server
+      name: server-ns2-80
       protocol: TLS # Mark as TLS as we are passing mTLS through.
     hosts:
-    - server.default.svc.cluster.global
+    - server.ns2.svc.cluster.global
     tls:
       mode: PASSTHROUGH

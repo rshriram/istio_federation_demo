@@ -860,7 +860,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: istio-citadel-service-account-__CLUSTERNAME__
+  name: istio-citadel-service-account
   namespace: istio-system
   labels:
     app: security
@@ -2272,7 +2272,7 @@ roleRef:
   name: istio-citadel-istio-system
 subjects:
   - kind: ServiceAccount
-    name: istio-citadel-service-account-__CLUSTERNAME__
+    name: istio-citadel-service-account
     namespace: istio-system
 
 ---
@@ -2569,16 +2569,6 @@ spec:
   selector:
     istio: citadel
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: istio-standalone-citadel
-  namespace: istio-system
-spec:
-  type: ExternalName
-  externalName: __ROOTCA_HOST__
-  selector: {}
 ---
 # Source: istio/charts/sidecarInjectorWebhook/templates/service.yaml
 apiVersion: v1
@@ -3491,41 +3481,20 @@ spec:
         sidecar.istio.io/inject: "false"
         scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
-      serviceAccountName: istio-citadel-service-account-__CLUSTERNAME__
+      serviceAccountName: istio-citadel-service-account
       containers:
         - name: citadel
           image: "docker.io/istio/citadel:1.0.0"
           imagePullPolicy: IfNotPresent
           args:
             - --append-dns-names=true
-            - --citadel-storage-namespace=istio-system
             - --grpc-port=8060
-            - --self-signed-ca=false
-            - --signing-cert=/etc/cacerts/ca-cert.pem
-            - --signing-key=/etc/cacerts/ca-key.pem
-            - --root-cert=/etc/cacerts/root-cert.pem
-            - --cert-chain=/etc/cacerts/cert-chain.pem
-            - --upstream-ca-address=istio-standalone-citadel:8060
-            - --org=test-org #customize ME
-            - --requested-ca-cert-ttl=48h
-            - --workload-cert-ttl=21h
-            # - --append-dns-names=true
-            # - --grpc-port=8060
-            # - --grpc-hostname=citadel
-            # - --self-signed-ca=true
-            # - --citadel-storage-namespace=istio-system
-          volumeMounts:
-          - name: cacerts
-            mountPath: /etc/cacerts
-            readOnly: true
+            - --grpc-hostname=citadel
+            - --citadel-storage-namespace=istio-system
+            - --self-signed-ca=true
           resources:
             requests:
               cpu: 10m
-      volumes:
-      - name: cacerts
-        secret:
-          secretName: cacerts
-          optional: true
             
       affinity:      
         nodeAffinity:
@@ -3642,6 +3611,97 @@ spec:
           items:
           - key: config
             path: config
+      affinity:      
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - ppc64le
+                - s390x
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 2
+            preference:
+              matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+          - weight: 2
+            preference:
+              matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - ppc64le
+          - weight: 2
+            preference:
+              matchExpressions:
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - s390x
+
+---
+# Source: istio/charts/tracing/templates/deployment.yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: istio-tracing
+  namespace: istio-system
+  labels:
+    app: istio-tracing
+    chart: tracing-0.1.0
+    release: istio
+    heritage: Tiller
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jaeger
+      annotations:
+        sidecar.istio.io/inject: "false"
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+    spec:
+      containers:
+        - name: jaeger
+          image: "docker.io/jaegertracing/all-in-one:1.5"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9411
+            - containerPort: 16686
+            - containerPort: 5775
+              protocol: UDP
+            - containerPort: 6831
+              protocol: UDP
+            - containerPort: 6832
+              protocol: UDP
+          env:
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: COLLECTOR_ZIPKIN_HTTP_PORT
+            value: "9411"
+          - name: MEMORY_MAX_TRACES
+            value: "50000"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 16686
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 16686
+          resources:
+            requests:
+              cpu: 10m
+            
       affinity:      
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -3798,6 +3858,132 @@ spec:
 ---
 
 ---
+# Source: istio/charts/tracing/templates/service-jaeger.yaml
+
+
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: jaeger-query
+    namespace: istio-system
+    annotations:
+    labels:
+      app: jaeger
+      jaeger-infra: jaeger-service
+      chart: tracing-0.1.0
+      release: istio
+      heritage: Tiller
+  spec:
+    ports:
+      - name: query-http
+        port: 16686
+        protocol: TCP
+        targetPort: 16686
+    selector:
+      app: jaeger
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: jaeger-collector
+    namespace: istio-system
+    labels:
+      app: jaeger
+      jaeger-infra: collector-service
+      chart: tracing-0.1.0
+      release: istio
+      heritage: Tiller
+  spec:
+    ports:
+    - name: jaeger-collector-tchannel
+      port: 14267
+      protocol: TCP
+      targetPort: 14267
+    - name: jaeger-collector-http
+      port: 14268
+      targetPort: 14268
+      protocol: TCP
+    selector:
+      app: jaeger
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: jaeger-agent
+    namespace: istio-system
+    labels:
+      app: jaeger
+      jaeger-infra: agent-service
+      chart: tracing-0.1.0
+      release: istio
+      heritage: Tiller
+  spec:
+    ports:
+    - name: agent-zipkin-thrift
+      port: 5775
+      protocol: UDP
+      targetPort: 5775
+    - name: agent-compact
+      port: 6831
+      protocol: UDP
+      targetPort: 6831
+    - name: agent-binary
+      port: 6832
+      protocol: UDP
+      targetPort: 6832
+    clusterIP: None
+    selector:
+      app: jaeger
+
+
+
+---
+# Source: istio/charts/tracing/templates/service.yaml
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: zipkin
+    namespace: istio-system
+    labels:
+      app: jaeger
+      chart: tracing-0.1.0
+      release: istio
+      heritage: Tiller
+  spec:
+    type: ClusterIP
+    ports:
+      - port: 9411
+        targetPort: 9411
+        protocol: TCP
+        name: http
+    selector:
+      app: jaeger
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: tracing
+    namespace: istio-system
+    annotations:
+    labels:
+      app: jaeger
+      chart: tracing-0.1.0
+      release: istio
+      heritage: Tiller
+  spec:
+    ports:
+      - name: http-query
+        port: 80
+        protocol: TCP
+        targetPort: 16686
+    selector:
+      app: jaeger
+
+---
 # Source: istio/charts/sidecarInjectorWebhook/templates/mutatingwebhook.yaml
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
@@ -3853,6 +4039,12 @@ webhooks:
 ---
 # Source: istio/charts/telemetry-gateway/templates/gateway.yaml
 
+
+---
+# Source: istio/charts/tracing/templates/ingress-jaeger.yaml
+
+---
+# Source: istio/charts/tracing/templates/ingress.yaml
 
 ---
 # Source: istio/templates/install-custom-resources.sh.tpl

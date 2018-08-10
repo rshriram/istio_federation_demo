@@ -39,7 +39,7 @@ spec:
   template:
     metadata:
       annotations:
-        sidecar.istio.io/status: '{"version":"e89e84c9de3aad386e6ec24d658a8c26f835e4bbc5f3556c3a9469e19a17a8d8","initContainers":["istio-init","enable-core-dump"],"containers":["istio-proxy"],"volumes":["istio-envoy","istio-certs"],"imagePullSecrets":null}'
+        sidecar.istio.io/status: '{"version":"55ca84b79cb5036ec3e54a3aed83cd77973cdcbed6bf653ff7b4f82659d68b1e","initContainers":["istio-init"],"containers":["istio-proxy"],"volumes":["istio-envoy","istio-certs"],"imagePullSecrets":null}'
       creationTimestamp: null
       labels:
         app: client
@@ -55,6 +55,8 @@ spec:
       - args:
         - proxy
         - sidecar
+        - proxyLogLevel
+        - trace
         - --configPath
         - /etc/istio/proxy
         - --binaryPath
@@ -68,7 +70,7 @@ spec:
         - --discoveryAddress
         - istio-pilot.istio-system:15007
         - --discoveryRefreshDelay
-        - 10s
+        - 1s
         - --zipkinAddress
         - zipkin.istio-system:9411
         - --connectTimeout
@@ -98,10 +100,12 @@ spec:
               fieldPath: metadata.name
         - name: ISTIO_META_INTERCEPTION_MODE
           value: REDIRECT
-        image: docker.io/istio/proxyv2:0.8.0
+        image: docker.io/istio/proxyv2:1.0.0
         imagePullPolicy: IfNotPresent
         name: istio-proxy
-        resources: {}
+        resources:
+          requests:
+            cpu: 10m
         securityContext:
           privileged: false
           readOnlyRootFilesystem: true
@@ -125,10 +129,10 @@ spec:
         - -x
         - ""
         - -b
-        - '*'
+        - ""
         - -d
         - ""
-        image: docker.io/istio/proxy_init:0.8.0
+        image: docker.io/istio/proxy_init:1.0.0
         imagePullPolicy: IfNotPresent
         name: istio-init
         resources: {}
@@ -136,17 +140,6 @@ spec:
           capabilities:
             add:
             - NET_ADMIN
-      - args:
-        - -c
-        - sysctl -w kernel.core_pattern=/etc/istio/proxy/core.%e.%p.%t && ulimit -c
-          unlimited
-        command:
-        - /bin/sh
-        image: docker.io/istio/proxy_init:0.8.0
-        imagePullPolicy: IfNotPresent
-        name: enable-core-dump
-        resources: {}
-        securityContext:
           privileged: true
       volumes:
       - emptyDir:

@@ -2,10 +2,10 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: service-entry-server-default
+  name: service-entry-server-ns2
 spec:
   hosts:
-  - server.default.svc.cluster.global
+  - server.ns2.svc.cluster.global
   # For TCP services, we need to assign each service a unique IP
   # so that Pilot can setup Envoy listeners for each service
   # Needs some custom DNS stuff to allocate IPs out of the
@@ -13,13 +13,13 @@ spec:
   #addresses:
   #- 127.255.172.172
   ports:
-  - number: 8888
+  - number: 80
     name: http
-    protocol: HTTP2
+    protocol: HTTP
   location: MESH_INTERNAL
   resolution: DNS
   endpoints:
     # This is our cluster-local egress gateway
   - address: istio-egressgateway.istio-system.svc.cluster.local
     ports:
-      http: 8888 #equivalent to targetPort in k8s
+      http: 80 #equivalent to targetPort in k8s
