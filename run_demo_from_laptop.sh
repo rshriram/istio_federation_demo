@@ -80,19 +80,20 @@ ${SCRIPTDIR}/provision_cluster_int_ca.sh $ROOTCA_NAME $CLUSTER2_NAME $CLUSTER2_I
 sed -e "s/__CLUSTERNAME__/${CLUSTER1_ID}/g;s/__ROOTCA_HOST__/${rootca_host}/g" istio.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
 sed -e "s/__CLUSTERNAME__/${CLUSTER2_ID}/g;s/__ROOTCA_HOST__/${rootca_host}/g" istio.yaml | kubectl --context ${CLUSTER2_NAME} apply -f -
 
-sleep 300 # NEED A WAY TO TEST IF ALL ISTIO COMPONENTS ARE UP
+sleep 30 # NEED A WAY TO TEST IF ALL ISTIO COMPONENTS ARE UP
 
-cluster1_gateway=`kubectl --context ${CLUSTER1_NAME} get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
+remote_ingress_gateway_lbhost=`kubectl --context ${CLUSTER2_NAME} get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
 
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/0-enable-global-mtls.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/1-service-entry-for-sidecar-to-egress-for-foosvc.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/2-mtls-destination-rule-for-sidecar-to-egress-for-foosvc.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/3-egress-gateway-with-mtls-for-foosvc.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/4-virtual-service-for-egress-to-ingress-for-foosvc.yaml
-sed -e s/__REPLACEME__/${cluster1_gateway}/g ${SCRIPTDIR}/route-rules/5-service-entry-for-egress-to-ingress-with-all-remote-ports.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
+sed -e s/__REPLACEME__/${remote_ingress_gateway_lbhost}/g ${SCRIPTDIR}/route-rules/5-service-entry-for-egress-to-ingress-with-all-remote-ports.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/client.yaml
 
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/0-enable-global-mtls.yaml
+kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/6-mtls-destination-rule-for-ingress-to-foosvc.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/7-ingress-gateway-with-mtls-for-foosvc.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/8-virtual-service-for-ingress-to-foosvc.yaml
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/server.yaml
