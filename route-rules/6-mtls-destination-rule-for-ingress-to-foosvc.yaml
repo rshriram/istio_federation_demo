@@ -1,13 +1,9 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: dest-rule-server-default
+  name: dest-rule-server-default-notls
 spec:
   host: server.default.svc.cluster.local
-  trafficPolicy:
-    # This applies for all clients in cluster 2
-    tls:
-      mode: ISTIO_MUTUAL
   subsets:
     # This applies to traffic coming to the service
     # via the ingress gateway. Since the ingress
