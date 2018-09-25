@@ -65,31 +65,28 @@ kubectl --context ${ROOTCA_NAME} -n istio-system create serviceaccount istio-cit
 
 # Install CoreDNS. All queries to *.global will resolve to 127.0.0.1
 # To change the domain, tweak coredns.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f coredns.yaml
-kubectl --context ${CLUSTER1_NAME} delete --namespace=kube-system deployment kube-dns
 kubectl --context ${CLUSTER1_NAME} create namespace istio-system
 kubectl --context ${CLUSTER1_NAME} apply -f crds.yaml
 ${SCRIPTDIR}/provision_cluster_int_ca.sh $ROOTCA_NAME $CLUSTER1_NAME $CLUSTER1_ID
+kubectl --context ${CLUSTER1_NAME} apply -f coredns.yaml
 
-kubectl --context ${CLUSTER2_NAME} apply -f coredns.yaml
-kubectl --context ${CLUSTER2_NAME} delete --namespace=kube-system deployment kube-dns
+
 kubectl --context ${CLUSTER2_NAME} create namespace istio-system
 kubectl --context ${CLUSTER2_NAME} apply -f crds.yaml
 ${SCRIPTDIR}/provision_cluster_int_ca.sh $ROOTCA_NAME $CLUSTER2_NAME $CLUSTER2_ID
+kubectl --context ${CLUSTER2_NAME} apply -f coredns.yaml
 
 sed -e "s/__CLUSTERNAME__/${CLUSTER1_ID}/g;s/__ROOTCA_HOST__/${rootca_host}/g" istio.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
 sed -e "s/__CLUSTERNAME__/${CLUSTER2_ID}/g;s/__ROOTCA_HOST__/${rootca_host}/g" istio.yaml | kubectl --context ${CLUSTER2_NAME} apply -f -
 
+echo "Update Kube-DNS config map to point to the CoreDNS service as the DNS server for .global stub domain"
 sleep 30 # NEED A WAY TO TEST IF ALL ISTIO COMPONENTS ARE UP
 
 remote_ingress_gateway_lbhost=`kubectl --context ${CLUSTER2_NAME} get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'`
 
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/0-enable-global-mtls.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/1-service-entry-for-sidecar-to-egress-for-foosvc.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/2-mtls-destination-rule-for-sidecar-to-egress-for-foosvc.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/3-egress-gateway-with-mtls-for-foosvc.yaml
-kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/4-virtual-service-for-egress-to-ingress-for-foosvc.yaml
-sed -e s/__REPLACEME__/${remote_ingress_gateway_lbhost}/g ${SCRIPTDIR}/route-rules/5-service-entry-for-egress-to-ingress-with-all-remote-ports.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
+sed -e s/__REPLACEME__/${remote_ingress_gateway_lbhost}/g ${SCRIPTDIR}/route-rules/1-service-entry-for-sidecar-to-ingress-for-foosvc.yaml | kubectl --context ${CLUSTER1_NAME} apply -f -
+kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/route-rules/2-mtls-destination-rule-for-sidecar-to-ingress-for-foosvc.yaml
 kubectl --context ${CLUSTER1_NAME} apply -f ${SCRIPTDIR}/client.yaml
 
 kubectl --context ${CLUSTER2_NAME} apply -f ${SCRIPTDIR}/route-rules/0-enable-global-mtls.yaml

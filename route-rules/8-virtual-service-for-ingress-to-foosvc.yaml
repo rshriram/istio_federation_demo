@@ -9,7 +9,7 @@ spec:
   - istio-ingressgateway-server-ns2
   tls:
   - match:
-    - port: 80
+    - port: 443
       sniHosts:
       - server.ns2.svc.cluster.global
     route:

@@ -8,8 +8,8 @@ spec:
   servers:
     # Union of all ports exposed by this cluster
   - port:
-      number: 80
-      name: server-ns2-80
+      number: 443
+      name: server-ns2-443
       protocol: TLS
     hosts:
     - server.ns2.svc.cluster.global

@@ -6,8 +6,6 @@ spec:
   host: server.ns2.svc.cluster.global
   trafficPolicy:
     tls:
-      # Can't use ISTIO_MUTUAL here as
-      # Egress gateway's SAN won't match
       mode: MUTUAL
       clientCertificate: /etc/certs/cert-chain.pem
       privateKey: /etc/certs/key.pem

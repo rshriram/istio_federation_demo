@@ -8,10 +8,8 @@ spec:
   - server.ns2.svc.cluster.global
   # For TCP services, we need to assign each service a unique IP
   # so that Pilot can setup Envoy listeners for each service
-  # Needs some custom DNS stuff to allocate IPs out of the
-  # loopback range. Right now, coreDNS returns 1.1.1.1
-  #addresses:
-  #- 127.255.172.172
+  addresses:
+  - 127.255.172.172
   ports:
   - number: 80
     name: http
@@ -19,7 +17,7 @@ spec:
   location: MESH_EXTERNAL
   resolution: DNS
   endpoints:
-    # This is our cluster-local egress gateway
-  - address: istio-egressgateway.istio-system.svc.cluster.local
+   # Address of the ingress gateway of the remote clusters
+  - address: __REPLACEME__
     ports:
-      http: 80 #equivalent to targetPort in k8s
+      http: 443
